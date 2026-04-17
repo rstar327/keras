@@ -1524,6 +1524,20 @@ def conv(
     )
 
 
+def _check_input_channels_match_kernel(inputs, kernel, data_format):
+    input_channels = (
+        inputs.shape[-1] if data_format == "channels_last" else inputs.shape[1]
+    )
+    kernel_input_channels = kernel.shape[-2]
+    if input_channels != kernel_input_channels:
+        raise ValueError(
+            "The number of input channels must match the kernel's "
+            f"input channels. Received: input channels="
+            f"{input_channels}, kernel input channels="
+            f"{kernel_input_channels}, data_format='{data_format}'."
+        )
+
+
 class DepthwiseConv(Operation):
     def __init__(
         self,
@@ -1551,6 +1565,24 @@ class DepthwiseConv(Operation):
         )
 
     def compute_output_spec(self, inputs, kernel):
+        input_channels = (
+            inputs.shape[-1]
+            if self.data_format == "channels_last"
+            else inputs.shape[1]
+        )
+        kernel_input_channels = kernel.shape[-2]
+        if (
+            input_channels is not None
+            and kernel_input_channels is not None
+            and input_channels != kernel_input_channels
+        ):
+            raise ValueError(
+                "The number of input channels must match the kernel's "
+                f"input channels. Received: input channels="
+                f"{input_channels}, kernel input channels="
+                f"{kernel_input_channels}, data_format="
+                f"'{self.data_format}'."
+            )
         output_shape = operation_utils.compute_conv_output_shape(
             inputs.shape,
             kernel.shape[-1] * kernel.shape[-2],
@@ -1619,6 +1651,7 @@ def depthwise_conv(
         return DepthwiseConv(
             strides, padding, data_format, dilation_rate
         ).symbolic_call(inputs, kernel)
+    _check_input_channels_match_kernel(inputs, kernel, data_format)
     return backend.nn.depthwise_conv(
         inputs,
         kernel,
@@ -1738,6 +1771,7 @@ def separable_conv(
             data_format,
             dilation_rate,
         ).symbolic_call(inputs, depthwise_kernel, pointwise_kernel)
+    _check_input_channels_match_kernel(inputs, depthwise_kernel, data_format)
     return backend.nn.separable_conv(
         inputs,
         depthwise_kernel,
