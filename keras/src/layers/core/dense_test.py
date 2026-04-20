@@ -124,10 +124,23 @@ class DenseTest(testing.TestCase):
         ("float", 2.5),
         ("none", None),
         ("string", "64"),
+        ("bool_true", True),
+        ("bool_false", False),
     )
     def test_dense_invalid_units_raises(self, units):
         with self.assertRaisesRegex(ValueError, "positive integer"):
             layers.Dense(units)
+
+    def test_dense_accepts_integer_like_scalars(self):
+        # numpy integer scalar
+        self.assertEqual(layers.Dense(np.int64(16)).units, 16)
+        self.assertEqual(layers.Dense(np.array(8)).units, 8)
+        # backend scalar tensor with int dtype (e.g. from ops.prod)
+        units_tensor = ops.prod(ops.convert_to_tensor([2, 4]))
+        self.assertEqual(layers.Dense(units_tensor).units, 8)
+        # reproduction from #21655: ops.prod on a Python shape tuple
+        shape_prod = ops.prod((10,))
+        self.assertEqual(layers.Dense(shape_prod).units, 10)
 
     def test_dense_correctness(self):
         # With bias and activation.
