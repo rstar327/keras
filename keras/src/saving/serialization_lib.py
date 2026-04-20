@@ -774,6 +774,25 @@ def _retrieve_class_or_fn(
             registered_name, custom_objects=custom_objects
         )
     if custom_obj is not None:
+        # Validate consistency between `registered_name` and `class_name`.
+        # A correctly serialized config always has `class_name` equal to the
+        # resolved class's `__name__` (see `serialize_with_public_class`).
+        # A mismatch indicates a tampered or malformed config where
+        # `registered_name` resolves to a different object than what
+        # `class_name` / `module` claim to describe.
+        if (
+            obj_type == "class"
+            and name is not None
+            and getattr(custom_obj, "__name__", None) is not None
+            and custom_obj.__name__ != name
+        ):
+            raise ValueError(
+                f"Inconsistent deserialization config: `registered_name` "
+                f"'{registered_name}' resolves to class "
+                f"'{custom_obj.__name__}', but the config specifies "
+                f"`class_name='{name}'`. These values must be consistent. "
+                f"Full object config: {full_config}"
+            )
         return custom_obj
 
     if module:

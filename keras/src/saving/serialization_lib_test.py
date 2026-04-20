@@ -167,6 +167,25 @@ class SerializationLibTest(testing.TestCase):
         y2 = new_layer(x)
         self.assertAllClose(y1, y2, atol=1e-5)
 
+    def test_inconsistent_registered_name_raises(self):
+        @object_registration.register_keras_serializable(
+            package="test_inconsistent", name="Dense"
+        )
+        class AliasedLayer(keras.layers.Layer):
+            def call(self, inputs):
+                return inputs
+
+        config = {
+            "class_name": "Dense",
+            "module": "keras.layers",
+            "registered_name": "test_inconsistent>Dense",
+            "config": {},
+        }
+        with self.assertRaisesRegex(
+            ValueError, "Inconsistent deserialization config"
+        ):
+            serialization_lib.deserialize_keras_object(config)
+
     def test_lambda_fn(self):
         obj = {"activation": lambda x: x**2}
         with self.assertRaisesRegex(ValueError, "arbitrary code execution"):
