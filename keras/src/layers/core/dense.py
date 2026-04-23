@@ -28,29 +28,18 @@ def _coerce_positive_integer(value, arg_name):
     rejects floats, arrays, and symbolic tensors.
     """
     original = value
-    if isinstance(value, bool):
-        # bools are ints in Python; reject explicitly.
-        raise ValueError(
-            f"Received an invalid value for `{arg_name}`, expected a positive "
-            f"integer. Received: {arg_name}={original}"
-        )
     if isinstance(value, np.integer):
         value = int(value)
-    elif isinstance(value, np.ndarray):
-        if value.ndim == 0 and np.issubdtype(value.dtype, np.integer):
-            value = int(value)
+    elif (
+        isinstance(value, np.ndarray)
+        and value.ndim == 0
+        and np.issubdtype(value.dtype, np.integer)
+    ):
+        value = int(value)
     elif not isinstance(value, int) and backend.is_tensor(value):
-        shape = getattr(value, "shape", None)
         dtype = backend.standardize_dtype(value.dtype)
-        if (
-            shape is not None
-            and tuple(shape) == ()
-            and ("int" in dtype or "uint" in dtype)
-        ):
-            try:
-                value = int(value)
-            except Exception:
-                pass
+        if len(value.shape) == 0 and dtype.startswith(("int", "uint")):
+            value = int(value)
     if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
         raise ValueError(
             f"Received an invalid value for `{arg_name}`, expected a positive "
