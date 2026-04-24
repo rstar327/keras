@@ -318,17 +318,19 @@ def check_depthwise_conv_input_channels(inputs, kernel, data_format):
         inputs.shape[-1] if data_format == "channels_last" else inputs.shape[1]
     )
     kernel_input_channels = kernel.shape[-2]
+    # Only validate when both dimensions are concrete Python ints. Dynamic
+    # dimensions can come in forms other than `None` during tracing.
     if (
-        input_channels is None
-        or kernel_input_channels is None
-        or input_channels == kernel_input_channels
+        isinstance(input_channels, int)
+        and isinstance(kernel_input_channels, int)
+        and input_channels != kernel_input_channels
     ):
-        return
-    raise ValueError(
-        "The number of input channels must match the kernel's input channels. "
-        f"Received: input channels={input_channels}, kernel input "
-        f"channels={kernel_input_channels}, data_format='{data_format}'."
-    )
+        raise ValueError(
+            "The number of input channels must match the kernel's input "
+            f"channels. Received: input channels={input_channels}, kernel "
+            f"input channels={kernel_input_channels}, "
+            f"data_format='{data_format}'."
+        )
 
 
 def to_tuple_or_list(value):

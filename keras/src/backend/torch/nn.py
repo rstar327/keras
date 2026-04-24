@@ -678,6 +678,11 @@ def separable_conv(
     data_format=None,
     dilation_rate=1,
 ):
+    data_format = backend.standardize_data_format(data_format)
+    inputs = convert_to_tensor(inputs)
+    depthwise_kernel = convert_to_tensor(depthwise_kernel)
+    pointwise_kernel = convert_to_tensor(pointwise_kernel)
+    check_depthwise_conv_input_channels(inputs, depthwise_kernel, data_format)
     depthwise_conv_output = depthwise_conv(
         inputs,
         depthwise_kernel,

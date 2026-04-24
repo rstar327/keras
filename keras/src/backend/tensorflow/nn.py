@@ -852,13 +852,13 @@ def depthwise_conv(
     data_format = backend.standardize_data_format(data_format)
     inputs = convert_to_tensor(inputs)
     kernel = convert_to_tensor(kernel)
-    check_depthwise_conv_input_channels(inputs, kernel, data_format)
     num_spatial_dims = len(inputs.shape) - 2
     if num_spatial_dims > 2:
         raise ValueError(
             "`inputs` rank must be 3 (1D conv) or 4 (2D conv). Received: "
             f"{inputs.ndim}."
         )
+    check_depthwise_conv_input_channels(inputs, kernel, data_format)
     # Because we use `tf.nn.depthwise_conv2d` for both 1D and 2D convs, we set
     # `tf_data_format` using 2D conv format.
     tf_data_format = _convert_data_format(data_format, 4)
@@ -934,13 +934,13 @@ def separable_conv(
     inputs = convert_to_tensor(inputs)
     depthwise_kernel = convert_to_tensor(depthwise_kernel)
     pointwise_kernel = convert_to_tensor(pointwise_kernel)
-    check_depthwise_conv_input_channels(inputs, depthwise_kernel, data_format)
     num_spatial_dims = len(inputs.shape) - 2
     if num_spatial_dims > 2:
         raise ValueError(
             "`num_spatial_dims` must be 1 or 2. Received: "
             f"num_spatial_dims={num_spatial_dims}."
         )
+    check_depthwise_conv_input_channels(inputs, depthwise_kernel, data_format)
     # Because we use `tf.nn.separable_conv2d` for both 1D and 2D convs, we set
     # `tf_data_format` using 2D conv format.
     tf_data_format = _convert_data_format(data_format, 4)
